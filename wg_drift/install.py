@@ -132,7 +132,11 @@ Context from dependencies:
 """
 
 
-_TEMPLATE_START_RE = re.compile(r"(?P<prefix>\\btemplate\\s*=\\s*\"\"\"\\n)", re.MULTILINE)
+# Match TOML multiline string prompt templates:
+# template = """
+# ...
+# """
+_TEMPLATE_START_RE = re.compile(r'(?P<prefix>\btemplate\s*=\s*"""\r?\n)', re.MULTILINE)
 
 
 def _inject_speedrift_into_template(body: str) -> str | None:

@@ -32,6 +32,19 @@ git commit -qm "init"
 wg init >/dev/null
 
 echo "0) install sets up wrapper + executor guidance"
+mkdir -p "$TMPDIR/.workgraph/executors"
+cat > "$TMPDIR/.workgraph/executors/custom.toml" <<'TOML'
+[executor]
+type = "claude"
+command = "claude"
+args = ["--print"]
+
+[executor.prompt_template]
+template = """
+hello
+"""
+TOML
+
 INSTALL_ARGS=()
 UXRIFT_BIN_CAND="$ROOT/../uxrift/bin/uxrift"
 if [[ -x "$UXRIFT_BIN_CAND" ]]; then
@@ -42,11 +55,13 @@ fi
 "$ROOT/bin/speedrift" --dir "$TMPDIR" install "${INSTALL_ARGS[@]}" >/dev/null
 test -x "$TMPDIR/.workgraph/speedrift"
 rg -n "## Speedrift Protocol" "$TMPDIR/.workgraph/executors/claude.toml" >/dev/null
+rg -n "## Speedrift Protocol" "$TMPDIR/.workgraph/executors/custom.toml" >/dev/null
 rg -n "^\\.speedrift/$" "$TMPDIR/.workgraph/.gitignore" >/dev/null
 
 if [[ -x "$UXRIFT_BIN_CAND" ]]; then
   test -x "$TMPDIR/.workgraph/uxrift"
   rg -n "## uxrift Protocol" "$TMPDIR/.workgraph/executors/claude.toml" >/dev/null
+  rg -n "## uxrift Protocol" "$TMPDIR/.workgraph/executors/custom.toml" >/dev/null
   rg -n "^\\.uxrift/$" "$TMPDIR/.workgraph/.gitignore" >/dev/null
 fi
 
