@@ -55,7 +55,7 @@ Notes:
 
 ### One-Time Setup (Per Workgraph Repo)
 
-From the repo you want to run Speedrift in (must have `.workgraph/`):
+From the repo you want to run Speedrift in (Speedrift will run `wg init` if needed):
 
 ```bash
 /Users/braydon/projects/experiments/speedrift/bin/speedrift install
@@ -65,6 +65,30 @@ This creates:
 - `./.workgraph/speedrift` (a wrapper pinned to this Speedrift checkout)
 - `./.workgraph/.gitignore` entry for `.speedrift/` state
 - executor prompt guidance under `./.workgraph/executors/` (so spawned agents know the protocol)
+
+### Start / Resume Protocol (The “How Do Agents Know What To Do?” Part)
+
+When you start a new project (or come back after a break), do this from the repo root:
+
+```bash
+# 1) Ensure wrapper + executor guidance are installed (idempotent)
+/Users/braydon/projects/experiments/speedrift/bin/speedrift install
+
+# 2) Ensure every open/in-progress task has a default contract (idempotent)
+./.workgraph/speedrift ensure-contracts --apply
+
+# 3) Write the current drift snapshot into workgraph + spawn follow-ups (optional but recommended)
+./.workgraph/speedrift scan --write-log --create-followups
+
+# 4) Keep a drift sidecar running while work happens
+./.workgraph/speedrift orchestrate --write-log --create-followups --interval 30 --redirect-interval 5
+```
+
+How this coordinates with Workgraph:
+- Speedrift stores the contract in the task `description` (as a `wg-contract` fenced block).
+- `speedrift install` patches/creates `.workgraph/executors/*.toml` prompt templates with a **Speedrift Protocol** section.
+  That means any agent spawned via those executors sees the “run Speedrift at start/before done” instructions automatically.
+- Drift never hard-blocks: Speedrift writes `wg log` entries and spawns follow-up tasks (for example `harden:`) instead.
 
 ### Daily Use
 
