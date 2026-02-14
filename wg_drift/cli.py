@@ -20,6 +20,7 @@ from wg_drift.contracts import (
 from wg_drift.drift import compute_drift
 from wg_drift.events import append_event, events_path, read_events_since
 from wg_drift.git_tools import get_git_root, get_working_changes
+from wg_drift.install import ensure_executor_guidance, ensure_speedrift_gitignore, write_speedrift_wrapper
 from wg_drift.state import locked_state, mark_pit_stop_created, update_task_state
 from wg_drift.workgraph import (
     Workgraph,
@@ -43,6 +44,9 @@ def _parse_args(argv: list[str]) -> argparse.Namespace:
     p.add_argument("--dir", help="Path to .workgraph directory (default: search upward from cwd)")
 
     sub = p.add_subparsers(dest="cmd", required=True)
+
+    install = sub.add_parser("install", help="Install Speedrift into a workgraph (wrapper, ignore, executor guidance)")
+    install.add_argument("--no-ensure-contracts", action="store_true", help="Do not inject default contracts into tasks")
 
     check = sub.add_parser("check", help="Compute drift report for a task (defaults to the only in-progress task)")
     check.add_argument("--task", help="Task id")
@@ -288,6 +292,27 @@ def main(argv: list[str] | None = None) -> int:
     args = _parse_args(sys.argv[1:] if argv is None else argv)
 
     try:
+        if args.cmd == "install":
+            # Resolve or initialize workgraph directory.
+            base = Path(args.dir).expanduser() if args.dir else Path.cwd()
+            wg_dir = base if base.name == ".workgraph" else base / ".workgraph"
+            if not (wg_dir / "graph.jsonl").exists():
+                import subprocess
+
+                subprocess.check_call(["wg", "init", "--dir", str(wg_dir)])
+
+            # Create wrapper and guidance in the target project.
+            speedrift_bin = (Path(__file__).resolve().parents[1] / "bin" / "speedrift").resolve()
+            write_speedrift_wrapper(wg_dir, speedrift_bin=speedrift_bin)
+            ensure_speedrift_gitignore(wg_dir)
+            ensure_executor_guidance(wg_dir)
+
+            if not args.no_ensure_contracts:
+                rewrite_graph_with_contracts(wg_dir=wg_dir, statuses={"open", "in-progress"}, apply=True)
+
+            print(f"Installed Speedrift into {wg_dir}")
+            return ExitCode.ok
+
         wg_dir = find_workgraph_dir(Path(args.dir) if args.dir else None)
         wg = load_workgraph(wg_dir)
 

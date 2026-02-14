@@ -91,6 +91,13 @@ This is meant to “drag the project back in sync” without blocking the curren
 - `wg add`: Speedrift creates follow-up tasks as additional graph nodes.
 - `graph.jsonl` rewriting: Speedrift edits task descriptions for contract injection and `contract set-touch`.
 
+## Installation / Agent Guidance
+
+Speedrift can install itself into a workgraph repo via `speedrift install`, which:
+- Creates `./.workgraph/speedrift` wrapper pinned to the Speedrift checkout.
+- Adds `.speedrift/` to `./.workgraph/.gitignore` (state + events).
+- Ensures executor prompt templates under `./.workgraph/executors/` include the **Speedrift Protocol** so spawned agents know what to do.
+
 ## Upstream Improvements
 
 If upstream adds either:

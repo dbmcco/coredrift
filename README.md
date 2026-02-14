@@ -53,30 +53,45 @@ Notes:
 
 ## Usage
 
-From a repo that has `.workgraph/graph.jsonl`:
+### One-Time Setup (Per Workgraph Repo)
+
+From the repo you want to run Speedrift in (must have `.workgraph/`):
+
+```bash
+/Users/braydon/projects/experiments/speedrift/bin/speedrift install
+```
+
+This creates:
+- `./.workgraph/speedrift` (a wrapper pinned to this Speedrift checkout)
+- `./.workgraph/.gitignore` entry for `.speedrift/` state
+- executor prompt guidance under `./.workgraph/executors/` (so spawned agents know the protocol)
+
+### Daily Use
+
+From that repo:
 
 ```bash
 # Show drift report for the only in-progress task (or pass --task <id>)
-./bin/speedrift check
+./.workgraph/speedrift check
 
 # Scan all in-progress tasks and wg-log findings; optionally create followups
-./bin/speedrift scan --write-log --create-followups
+./.workgraph/speedrift scan --write-log --create-followups
 
 # Continuous mode (useful as a background sidecar)
-./bin/speedrift watch --write-log --create-followups --interval 30
+./.workgraph/speedrift watch --write-log --create-followups --interval 30
 
 # Orchestrated mode (two agents, parallel)
-./bin/speedrift orchestrate --write-log --create-followups --interval 30 --redirect-interval 5
+./.workgraph/speedrift orchestrate --write-log --create-followups --interval 30 --redirect-interval 5
 
 # Inspect or edit contracts (edits graph.jsonl)
-./bin/speedrift contract show --task <id>
-./bin/speedrift contract set-touch --task <id> src/** tests/**
+./.workgraph/speedrift contract show --task <id>
+./.workgraph/speedrift contract set-touch --task <id> src/** tests/**
 
 # Ensure every open/in-progress task has a default contract block (edits graph.jsonl)
-./bin/speedrift ensure-contracts --apply
+./.workgraph/speedrift ensure-contracts --apply
 ```
 
-`./bin/wg-drift` is kept as a compatibility alias.
+In the Speedrift repo itself, `./bin/wg-drift` is kept as a compatibility alias.
 
 ## Testing
 

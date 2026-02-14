@@ -31,6 +31,13 @@ git commit -qm "init"
 
 wg init >/dev/null
 
+echo "0) install sets up wrapper + executor guidance"
+"$ROOT/bin/speedrift" --dir "$TMPDIR" install >/dev/null
+test -x "$TMPDIR/.workgraph/speedrift"
+rg -n "## Speedrift Protocol" "$TMPDIR/.workgraph/executors/claude.toml" >/dev/null
+rg -n "^\\.speedrift/$" "$TMPDIR/.workgraph/.gitignore" >/dev/null
+echo "ok"
+
 DESC_FILE="$(mktemp)"
 cat > "$DESC_FILE" <<'MD'
 ```wg-contract
@@ -59,7 +66,7 @@ printf '\n# fallback path\n' >> src/app.py
 
 echo "1) speedrift check reports findings"
 set +e
-REPORT="$("$ROOT/bin/speedrift" --dir "$TMPDIR" check --json)"
+REPORT="$(./.workgraph/speedrift --dir "$TMPDIR" check --json)"
 CODE="$?"
 set -e
 if [[ "$CODE" -ne 0 && "$CODE" -ne 3 ]]; then
@@ -70,7 +77,7 @@ python3 -c 'import json,sys; r=json.loads(sys.stdin.read()); kinds={f["kind"] fo
 
 echo "2) speedrift can write wg log and create follow-up tasks"
 set +e
-"$ROOT/bin/speedrift" --dir "$TMPDIR" check --write-log --create-followups >/dev/null
+./.workgraph/speedrift --dir "$TMPDIR" check --write-log --create-followups >/dev/null
 CODE="$?"
 set -e
 if [[ "$CODE" -ne 0 && "$CODE" -ne 3 ]]; then
@@ -85,7 +92,7 @@ wg show --dir "$TMPDIR/.workgraph" drift-scope-core-task --json >/dev/null
 
 echo "3) pit-stop escalation after consecutive drift"
 set +e
-"$ROOT/bin/speedrift" --dir "$TMPDIR" check --create-followups >/dev/null
+./.workgraph/speedrift --dir "$TMPDIR" check --create-followups >/dev/null
 CODE="$?"
 set -e
 if [[ "$CODE" -ne 0 && "$CODE" -ne 3 ]]; then
@@ -101,11 +108,11 @@ wg claim core-task-2 --actor tester >/dev/null
 echo "readme2" > README2.md
 printf '\n# fallback added\n' >> src/app.py
 
-"$ROOT/bin/speedrift" --dir "$TMPDIR" monitor --once >/dev/null
+./.workgraph/speedrift --dir "$TMPDIR" monitor --once >/dev/null
 test -s "$TMPDIR/.workgraph/.speedrift/events.jsonl"
 
 set +e
-"$ROOT/bin/speedrift" --dir "$TMPDIR" redirect --once --write-log --create-followups --from-start >/dev/null
+./.workgraph/speedrift --dir "$TMPDIR" redirect --once --write-log --create-followups --from-start >/dev/null
 CODE="$?"
 set -e
 if [[ "$CODE" -ne 0 && "$CODE" -ne 3 ]]; then
@@ -117,13 +124,13 @@ wg show --dir "$TMPDIR/.workgraph" drift-scope-core-task-2 --json >/dev/null
 echo "ok"
 
 echo "5) contract set-touch rewrites description"
-"$ROOT/bin/speedrift" --dir "$TMPDIR" contract set-touch --task core-task "src/**" "tests/**" >/dev/null
+./.workgraph/speedrift --dir "$TMPDIR" contract set-touch --task core-task "src/**" "tests/**" >/dev/null
 wg show --dir "$TMPDIR/.workgraph" core-task --json | python3 -c 'import json,sys; t=json.load(sys.stdin); d=t.get("description") or ""; assert "tests/**" in d, d; print("ok")'
 
 echo "6) ensure-contracts can inject default contracts"
 wg add "No contract" --id no-contract >/dev/null
 
-"$ROOT/bin/speedrift" --dir "$TMPDIR" ensure-contracts --apply >/dev/null
+./.workgraph/speedrift --dir "$TMPDIR" ensure-contracts --apply >/dev/null
 wg show --dir "$TMPDIR/.workgraph" no-contract --json | python3 -c 'import json,sys; t=json.load(sys.stdin); desc=t.get("description") or ""; assert "```wg-contract" in desc; print("ok")'
 
 echo "e2e_smoke: OK"
