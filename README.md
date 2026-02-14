@@ -61,10 +61,21 @@ From the repo you want to run Speedrift in (Speedrift will run `wg init` if need
 /Users/braydon/projects/experiments/speedrift/bin/speedrift install
 ```
 
+Optional (if you also use `uxrift`):
+
+```bash
+# Best-effort autodetect (looks at $UXRIFT_BIN, a sibling ../uxrift checkout, or uxrift on PATH)
+/Users/braydon/projects/experiments/speedrift/bin/speedrift install --with-uxrift
+
+# Or be explicit:
+/Users/braydon/projects/experiments/speedrift/bin/speedrift install --uxrift-bin /path/to/uxrift/bin/uxrift
+```
+
 This creates:
 - `./.workgraph/speedrift` (a wrapper pinned to this Speedrift checkout)
 - `./.workgraph/.gitignore` entry for `.speedrift/` state
 - executor prompt guidance under `./.workgraph/executors/` (so spawned agents know the protocol)
+- (optional) `./.workgraph/uxrift` wrapper + `.uxrift/` ignore + executor guidance for `uxrift`
 
 ### Start / Resume Protocol (The “How Do Agents Know What To Do?” Part)
 

@@ -32,10 +32,24 @@ git commit -qm "init"
 wg init >/dev/null
 
 echo "0) install sets up wrapper + executor guidance"
-"$ROOT/bin/speedrift" --dir "$TMPDIR" install >/dev/null
+INSTALL_ARGS=()
+UXRIFT_BIN_CAND="$ROOT/../uxrift/bin/uxrift"
+if [[ -x "$UXRIFT_BIN_CAND" ]]; then
+  export UXRIFT_BIN="$UXRIFT_BIN_CAND"
+  INSTALL_ARGS+=(--with-uxrift)
+fi
+
+"$ROOT/bin/speedrift" --dir "$TMPDIR" install "${INSTALL_ARGS[@]}" >/dev/null
 test -x "$TMPDIR/.workgraph/speedrift"
 rg -n "## Speedrift Protocol" "$TMPDIR/.workgraph/executors/claude.toml" >/dev/null
 rg -n "^\\.speedrift/$" "$TMPDIR/.workgraph/.gitignore" >/dev/null
+
+if [[ -x "$UXRIFT_BIN_CAND" ]]; then
+  test -x "$TMPDIR/.workgraph/uxrift"
+  rg -n "## uxrift Protocol" "$TMPDIR/.workgraph/executors/claude.toml" >/dev/null
+  rg -n "^\\.uxrift/$" "$TMPDIR/.workgraph/.gitignore" >/dev/null
+fi
+
 echo "ok"
 
 DESC_FILE="$(mktemp)"
