@@ -41,7 +41,10 @@ args = ["--print"]
 
 [executor.prompt_template]
 template = """
-hello
+## Speedrift Protocol
+- Treat the `wg-contract` block (in the task description) as binding.
+- At start and just before completion, run:
+  ./.workgraph/speedrift check --task {{task_id}} --write-log --create-followups
 """
 TOML
 
@@ -57,6 +60,7 @@ test -x "$TMPDIR/.workgraph/speedrift"
 test -x "$TMPDIR/.workgraph/rifts"
 rg -n "## Speedrift Protocol" "$TMPDIR/.workgraph/executors/claude.toml" >/dev/null
 rg -n "## Speedrift Protocol" "$TMPDIR/.workgraph/executors/custom.toml" >/dev/null
+rg -n "\\./\\.workgraph/rifts check" "$TMPDIR/.workgraph/executors/custom.toml" >/dev/null
 rg -n "^\\.speedrift/$" "$TMPDIR/.workgraph/.gitignore" >/dev/null
 
 if [[ -x "$UXRIFT_BIN_CAND" ]]; then

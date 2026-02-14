@@ -262,6 +262,12 @@ def _inject_speedrift_into_template(body: str) -> str | None:
     """
 
     if SPEEDRIFT_MARKER in body:
+        # Upgrade existing protocol blocks in-place if they reference speedrift directly.
+        old = "  ./.workgraph/speedrift check --task {{task_id}} --write-log --create-followups"
+        new = "  ./.workgraph/rifts check --task {{task_id}} --write-log --create-followups"
+        upgraded = body.replace(old, new)
+        if upgraded != body:
+            return upgraded
         return None
 
     m = _TEMPLATE_START_RE.search(body)
