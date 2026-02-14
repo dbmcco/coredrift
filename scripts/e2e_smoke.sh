@@ -54,6 +54,7 @@ fi
 
 "$ROOT/bin/speedrift" --dir "$TMPDIR" install "${INSTALL_ARGS[@]}" >/dev/null
 test -x "$TMPDIR/.workgraph/speedrift"
+test -x "$TMPDIR/.workgraph/rifts"
 rg -n "## Speedrift Protocol" "$TMPDIR/.workgraph/executors/claude.toml" >/dev/null
 rg -n "## Speedrift Protocol" "$TMPDIR/.workgraph/executors/custom.toml" >/dev/null
 rg -n "^\\.speedrift/$" "$TMPDIR/.workgraph/.gitignore" >/dev/null
@@ -118,6 +119,17 @@ wg show --dir "$TMPDIR/.workgraph" core-task --json | python3 -c 'import json,sy
 
 wg show --dir "$TMPDIR/.workgraph" drift-harden-core-task --json >/dev/null
 wg show --dir "$TMPDIR/.workgraph" drift-scope-core-task --json >/dev/null
+
+echo "2b) rifts wrapper can run unified check"
+set +e
+./.workgraph/rifts --dir "$TMPDIR" check --task core-task --write-log --create-followups >/dev/null
+CODE="$?"
+set -e
+if [[ "$CODE" -ne 0 && "$CODE" -ne 3 ]]; then
+  echo "error: rifts check failed with exit code $CODE" >&2
+  exit "$CODE"
+fi
+echo "ok"
 
 echo "3) pit-stop escalation after consecutive drift"
 set +e

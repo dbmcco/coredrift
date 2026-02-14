@@ -106,6 +106,9 @@ How this coordinates with Workgraph:
 From that repo:
 
 ```bash
+# Unified one-command check (runs speedrift + best-effort uxrift if installed and task declares a ```uxrift spec)
+./.workgraph/rifts check --task <id> --write-log --create-followups
+
 # Show drift report for the only in-progress task (or pass --task <id>)
 ./.workgraph/speedrift check
 

@@ -25,6 +25,7 @@ from wg_drift.install import (
     ensure_executor_guidance,
     ensure_speedrift_gitignore,
     ensure_uxrift_gitignore,
+    write_rifts_wrapper,
     write_speedrift_wrapper,
     write_uxrift_wrapper,
 )
@@ -318,6 +319,7 @@ def main(argv: list[str] | None = None) -> int:
             speedrift_bin = (Path(__file__).resolve().parents[1] / "bin" / "speedrift").resolve()
             write_speedrift_wrapper(wg_dir, speedrift_bin=speedrift_bin)
             ensure_speedrift_gitignore(wg_dir)
+            write_rifts_wrapper(wg_dir)
 
             include_uxrift = False
             uxrift_bin: Path | None = None
