@@ -48,27 +48,27 @@ template = """
 """
 TOML
 
-INSTALL_ARGS=()
-UXRIFT_BIN_CAND="$ROOT/../uxrift/bin/uxrift"
-if [[ -x "$UXRIFT_BIN_CAND" ]]; then
-  export UXRIFT_BIN="$UXRIFT_BIN_CAND"
-  INSTALL_ARGS+=(--with-uxrift)
-fi
+UXRIFT_DUMMY="$TMPDIR/uxrift-dummy"
+export UXRIFT_E2E_MARKER="$TMPDIR/uxrift-called.txt"
+cat > "$UXRIFT_DUMMY" <<'SH'
+#!/usr/bin/env bash
+set -euo pipefail
+echo "uxrift $*" >> "${UXRIFT_E2E_MARKER:?}"
+exit 0
+SH
+chmod +x "$UXRIFT_DUMMY"
 
-"$ROOT/bin/speedrift" --dir "$TMPDIR" install "${INSTALL_ARGS[@]}" >/dev/null
+"$ROOT/bin/speedrift" --dir "$TMPDIR" install --uxrift-bin "$UXRIFT_DUMMY" >/dev/null
 test -x "$TMPDIR/.workgraph/speedrift"
 test -x "$TMPDIR/.workgraph/rifts"
+test -x "$TMPDIR/.workgraph/uxrift"
 rg -n "## Speedrift Protocol" "$TMPDIR/.workgraph/executors/claude.toml" >/dev/null
 rg -n "## Speedrift Protocol" "$TMPDIR/.workgraph/executors/custom.toml" >/dev/null
 rg -n "\\./\\.workgraph/rifts check" "$TMPDIR/.workgraph/executors/custom.toml" >/dev/null
 rg -n "^\\.speedrift/$" "$TMPDIR/.workgraph/.gitignore" >/dev/null
-
-if [[ -x "$UXRIFT_BIN_CAND" ]]; then
-  test -x "$TMPDIR/.workgraph/uxrift"
-  rg -n "## uxrift Protocol" "$TMPDIR/.workgraph/executors/claude.toml" >/dev/null
-  rg -n "## uxrift Protocol" "$TMPDIR/.workgraph/executors/custom.toml" >/dev/null
-  rg -n "^\\.uxrift/$" "$TMPDIR/.workgraph/.gitignore" >/dev/null
-fi
+rg -n "## uxrift Protocol" "$TMPDIR/.workgraph/executors/claude.toml" >/dev/null
+rg -n "## uxrift Protocol" "$TMPDIR/.workgraph/executors/custom.toml" >/dev/null
+rg -n "^\\.uxrift/$" "$TMPDIR/.workgraph/.gitignore" >/dev/null
 
 echo "ok"
 
@@ -125,6 +125,7 @@ wg show --dir "$TMPDIR/.workgraph" drift-harden-core-task --json >/dev/null
 wg show --dir "$TMPDIR/.workgraph" drift-scope-core-task --json >/dev/null
 
 echo "2b) rifts wrapper can run unified check"
+test ! -e "$UXRIFT_E2E_MARKER"
 set +e
 ./.workgraph/rifts --dir "$TMPDIR" check --task core-task --write-log --create-followups >/dev/null
 CODE="$?"
@@ -133,11 +134,51 @@ if [[ "$CODE" -ne 0 && "$CODE" -ne 3 ]]; then
   echo "error: rifts check failed with exit code $CODE" >&2
   exit "$CODE"
 fi
+test ! -e "$UXRIFT_E2E_MARKER"
+echo "ok"
+
+echo "2c) rifts runs uxrift when a task declares a uxrift spec"
+UX_DESC_FILE="$(mktemp)"
+cat > "$UX_DESC_FILE" <<'MD'
+```wg-contract
+schema = 1
+mode = "core"
+objective = "ux task"
+non_goals = ["No fallbacks"]
+touch = ["src/**"]
+acceptance = []
+max_files = 10
+max_loc = 200
+auto_followups = true
+```
+
+```uxrift
+schema = 1
+url = "http://localhost:12345"
+pages = ["/"]
+llm = false
+```
+
+Run uxrift.
+MD
+
+wg add "UX task" --id ux-task -d "$(cat "$UX_DESC_FILE")" >/dev/null
+wg claim ux-task --actor tester >/dev/null
+
+set +e
+./.workgraph/rifts --dir "$TMPDIR" check --task ux-task --write-log --create-followups >/dev/null
+CODE="$?"
+set -e
+if [[ "$CODE" -ne 0 && "$CODE" -ne 3 ]]; then
+  echo "error: rifts check (uxrift) failed with exit code $CODE" >&2
+  exit "$CODE"
+fi
+test -s "$UXRIFT_E2E_MARKER"
 echo "ok"
 
 echo "3) pit-stop escalation after consecutive drift"
 set +e
-./.workgraph/speedrift --dir "$TMPDIR" check --create-followups >/dev/null
+./.workgraph/speedrift --dir "$TMPDIR" check --task core-task --create-followups >/dev/null
 CODE="$?"
 set -e
 if [[ "$CODE" -ne 0 && "$CODE" -ne 3 ]]; then
