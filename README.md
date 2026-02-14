@@ -66,7 +66,7 @@ From a repo that has `.workgraph/graph.jsonl`:
 ./bin/speedrift watch --write-log --create-followups --interval 30
 
 # Orchestrated mode (two agents, parallel)
-./bin/speedrift orchestrate --write-log --create-followups --interval 30
+./bin/speedrift orchestrate --write-log --create-followups --interval 30 --redirect-interval 5
 
 # Inspect or edit contracts (edits graph.jsonl)
 ./bin/speedrift contract show --task <id>

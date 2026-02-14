@@ -78,6 +78,7 @@ def _parse_args(argv: list[str]) -> argparse.Namespace:
 
     orch = sub.add_parser("orchestrate", help="Run monitor + redirect agents in parallel (two subprocesses)")
     orch.add_argument("--interval", type=int, default=30, help="Monitor poll interval seconds (default: 30)")
+    orch.add_argument("--redirect-interval", type=int, default=5, help="Redirect poll interval seconds (default: 5)")
     orch.add_argument("--write-log", action="store_true", help="Write a drift summary to wg log (redirect agent)")
     orch.add_argument("--create-followups", action="store_true", help="Create follow-up tasks (redirect agent)")
 
@@ -477,7 +478,7 @@ def main(argv: list[str] | None = None) -> int:
                 dir_arg,
                 "redirect",
                 "--interval",
-                "5",
+                str(int(args.redirect_interval)),
             ]
             if args.write_log:
                 redirect_cmd.append("--write-log")
