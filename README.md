@@ -61,6 +61,12 @@ From the repo you want to run Speedrift in (Speedrift will run `wg init` if need
 /Users/braydon/projects/experiments/speedrift/bin/speedrift install
 ```
 
+If you are using the broader `rifts` suite, prefer the unified installer:
+
+```bash
+/Users/braydon/projects/experiments/driftdriver/bin/driftdriver install
+```
+
 Optional (if you also use `uxrift`):
 
 ```bash
@@ -106,7 +112,7 @@ How this coordinates with Workgraph:
 From that repo:
 
 ```bash
-# Unified one-command check (runs speedrift + best-effort uxrift if installed and task declares a ```uxrift spec)
+# Unified one-command check (runs speedrift always; runs specrift/uxrift when the task declares a ```specrift/```uxrift spec)
 ./.workgraph/rifts check --task <id> --write-log --create-followups
 
 # Show drift report for the only in-progress task (or pass --task <id>)
