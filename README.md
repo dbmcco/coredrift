@@ -11,6 +11,7 @@ It does 3 things:
 
 This project is part of the Speedrift suite for Workgraph-first drift control.
 
+- Suite home: [speedrift-ecosystem](https://github.com/dbmcco/speedrift-ecosystem)
 - Spine: [Workgraph](https://graphwork.github.io/)
 - Orchestrator: [driftdriver](https://github.com/dbmcco/driftdriver)
 - Baseline lane: [speedrift](https://github.com/dbmcco/speedrift)
