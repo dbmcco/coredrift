@@ -16,7 +16,7 @@ class Workgraph:
     tasks: dict[str, dict[str, Any]]
 
     def wg_log(self, task_id: str, message: str) -> None:
-        subprocess.check_call(["wg", "--dir", str(self.wg_dir), "log", task_id, message])
+        subprocess.check_call(["wg", "--dir", str(self.wg_dir), "log", task_id, message], stdout=subprocess.DEVNULL)
 
     def ensure_task(
         self,
@@ -38,7 +38,7 @@ class Workgraph:
         if tags:
             for t in tags:
                 cmd += ["-t", t]
-        subprocess.check_call(cmd)
+        subprocess.check_call(cmd, stdout=subprocess.DEVNULL)
         # Keep in-memory index in sync so repeated ensure_task calls stay idempotent.
         self.tasks[task_id] = {"kind": "task", "id": task_id, "title": title}
 
