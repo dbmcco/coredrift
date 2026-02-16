@@ -24,10 +24,10 @@ from wg_drift.git_tools import get_git_root, get_working_changes
 from wg_drift.install import (
     ensure_executor_guidance,
     ensure_speedrift_gitignore,
-    ensure_uxrift_gitignore,
-    write_rifts_wrapper,
+    ensure_uxdrift_gitignore,
+    write_drifts_wrapper,
     write_speedrift_wrapper,
-    write_uxrift_wrapper,
+    write_uxdrift_wrapper,
 )
 from wg_drift.state import locked_state, mark_pit_stop_created, update_task_state
 from wg_drift.workgraph import (
@@ -56,11 +56,11 @@ def _parse_args(argv: list[str]) -> argparse.Namespace:
     install = sub.add_parser("install", help="Install Speedrift into a workgraph (wrapper, ignore, executor guidance)")
     install.add_argument("--no-ensure-contracts", action="store_true", help="Do not inject default contracts into tasks")
     install.add_argument(
-        "--with-uxrift",
+        "--with-uxdrift",
         action="store_true",
-        help="Also install uxrift wrapper + executor protocol (best-effort autodetect)",
+        help="Also install uxdrift wrapper + executor protocol (best-effort autodetect)",
     )
-    install.add_argument("--uxrift-bin", help="Path to uxrift bin/uxrift (enables uxrift integration)")
+    install.add_argument("--uxdrift-bin", help="Path to uxdrift bin/uxdrift (enables uxdrift integration)")
 
     check = sub.add_parser("check", help="Compute drift report for a task (defaults to the only in-progress task)")
     check.add_argument("--task", help="Task id")
@@ -317,29 +317,34 @@ def main(argv: list[str] | None = None) -> int:
 
             # Create wrapper and guidance in the target project.
             speedrift_bin = (Path(__file__).resolve().parents[1] / "bin" / "speedrift").resolve()
+            if not speedrift_bin.exists():
+                which = shutil.which("speedrift")
+                if not which:
+                    raise ValueError("speedrift executable not found on PATH; install speedrift or run from a checkout.")
+                speedrift_bin = Path(which).resolve()
             write_speedrift_wrapper(wg_dir, speedrift_bin=speedrift_bin)
             ensure_speedrift_gitignore(wg_dir)
-            write_rifts_wrapper(wg_dir)
+            write_drifts_wrapper(wg_dir)
 
-            include_uxrift = False
-            uxrift_bin: Path | None = None
-            if args.uxrift_bin:
-                uxrift_bin = Path(args.uxrift_bin).expanduser().resolve()
-                if not uxrift_bin.exists():
-                    raise ValueError(f"uxrift bin not found: {uxrift_bin}")
-                include_uxrift = True
-            elif args.with_uxrift:
+            include_uxdrift = False
+            uxdrift_bin: Path | None = None
+            if args.uxdrift_bin:
+                uxdrift_bin = Path(args.uxdrift_bin).expanduser().resolve()
+                if not uxdrift_bin.exists():
+                    raise ValueError(f"uxdrift bin not found: {uxdrift_bin}")
+                include_uxdrift = True
+            elif args.with_uxdrift:
                 candidates: list[Path] = []
 
-                env_bin = os.environ.get("UXRIFT_BIN")
+                env_bin = os.environ.get("UXDRIFT_BIN")
                 if env_bin:
                     candidates.append(Path(env_bin).expanduser())
 
                 # Convenience for "side-by-side" checkouts (common in this workspace).
                 repo_root = Path(__file__).resolve().parents[1]
-                candidates.append(repo_root.parent / "uxrift" / "bin" / "uxrift")
+                candidates.append(repo_root.parent / "uxdrift" / "bin" / "uxdrift")
 
-                which = shutil.which("uxrift")
+                which = shutil.which("uxdrift")
                 if which:
                     candidates.append(Path(which))
 
@@ -349,28 +354,28 @@ def main(argv: list[str] | None = None) -> int:
                     except Exception:
                         resolved = c
                     if resolved.exists() and os.access(resolved, os.X_OK):
-                        uxrift_bin = resolved
-                        include_uxrift = True
+                        uxdrift_bin = resolved
+                        include_uxdrift = True
                         break
 
-                if not include_uxrift:
+                if not include_uxdrift:
                     print(
-                        "note: uxrift not found (set UXRIFT_BIN or pass --uxrift-bin); skipping uxrift integration",
+                        "note: uxdrift not found (set UXDRIFT_BIN or pass --uxdrift-bin); skipping uxdrift integration",
                         file=sys.stderr,
                     )
 
-            if include_uxrift and uxrift_bin is not None:
-                write_uxrift_wrapper(wg_dir, uxrift_bin=uxrift_bin)
-                ensure_uxrift_gitignore(wg_dir)
+            if include_uxdrift and uxdrift_bin is not None:
+                write_uxdrift_wrapper(wg_dir, uxdrift_bin=uxdrift_bin)
+                ensure_uxdrift_gitignore(wg_dir)
 
-            ensure_executor_guidance(wg_dir, include_uxrift=include_uxrift)
+            ensure_executor_guidance(wg_dir, include_uxdrift=include_uxdrift)
 
             if not args.no_ensure_contracts:
                 rewrite_graph_with_contracts(wg_dir=wg_dir, statuses={"open", "in-progress"}, apply=True)
 
             msg = f"Installed Speedrift into {wg_dir}"
-            if include_uxrift:
-                msg += " (with uxrift)"
+            if include_uxdrift:
+                msg += " (with uxdrift)"
             print(msg)
             return ExitCode.ok
 

@@ -13,3 +13,5 @@ build/
 coverage.xml
 .coverage
 
+# Local workgraph (dogfood)
+.workgraph/

@@ -58,30 +58,30 @@ Notes:
 From the repo you want to run Speedrift in (Speedrift will run `wg init` if needed):
 
 ```bash
-/Users/braydon/projects/experiments/speedrift/bin/speedrift install
+speedrift install
 ```
 
-If you are using the broader `rifts` suite, prefer the unified installer:
+If you are using the broader `drifts` suite, prefer the unified installer:
 
 ```bash
-/Users/braydon/projects/experiments/driftdriver/bin/driftdriver install
+driftdriver install
 ```
 
-Optional (if you also use `uxrift`):
+Optional (if you also use `uxdrift`):
 
 ```bash
-# Best-effort autodetect (looks at $UXRIFT_BIN, a sibling ../uxrift checkout, or uxrift on PATH)
-/Users/braydon/projects/experiments/speedrift/bin/speedrift install --with-uxrift
+# Best-effort autodetect (looks at $UXDRIFT_BIN, a sibling ../uxdrift checkout, or uxdrift on PATH)
+speedrift install --with-uxdrift
 
 # Or be explicit:
-/Users/braydon/projects/experiments/speedrift/bin/speedrift install --uxrift-bin /path/to/uxrift/bin/uxrift
+speedrift install --uxdrift-bin /path/to/uxdrift/bin/uxdrift
 ```
 
 This creates:
-- `./.workgraph/speedrift` (a wrapper pinned to this Speedrift checkout)
+- `./.workgraph/speedrift` (a wrapper)
 - `./.workgraph/.gitignore` entry for `.speedrift/` state
 - executor prompt guidance under `./.workgraph/executors/` (so spawned agents know the protocol)
-- (optional) `./.workgraph/uxrift` wrapper + `.uxrift/` ignore + executor guidance for `uxrift`
+- (optional) `./.workgraph/uxdrift` wrapper + `.uxdrift/` ignore + executor guidance for `uxdrift`
 
 ### Start / Resume Protocol (The “How Do Agents Know What To Do?” Part)
 
@@ -89,7 +89,7 @@ When you start a new project (or come back after a break), do this from the repo
 
 ```bash
 # 1) Ensure wrapper + executor guidance are installed (idempotent)
-/Users/braydon/projects/experiments/speedrift/bin/speedrift install
+speedrift install
 
 # 2) Ensure every open/in-progress task has a default contract (idempotent)
 ./.workgraph/speedrift ensure-contracts --apply
@@ -112,8 +112,8 @@ How this coordinates with Workgraph:
 From that repo:
 
 ```bash
-# Unified one-command check (runs speedrift always; runs specrift/uxrift when the task declares a ```specrift/```uxrift spec)
-./.workgraph/rifts check --task <id> --write-log --create-followups
+# Unified one-command check (via driftdriver: runs speedrift always; runs optional drifts when the task declares specs)
+./.workgraph/drifts check --task <id> --write-log --create-followups
 
 # Show drift report for the only in-progress task (or pass --task <id>)
 ./.workgraph/speedrift check
@@ -135,7 +135,7 @@ From that repo:
 ./.workgraph/speedrift ensure-contracts --apply
 ```
 
-In the Speedrift repo itself, `./bin/wg-drift` is kept as a compatibility alias.
+In the Speedrift repo itself, run `./bin/speedrift` from the checkout root.
 
 ## Testing
 

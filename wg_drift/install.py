@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 SPEEDRIFT_MARKER = "## Speedrift Protocol"
-UXRIFT_MARKER = "## uxrift Protocol"
+UXDRIFT_MARKER = "## uxdrift Protocol"
 
 
 @dataclass(frozen=True)
@@ -42,8 +42,8 @@ def ensure_speedrift_gitignore(wg_dir: Path) -> bool:
     return _ensure_line_in_file(wg_dir / ".gitignore", ".speedrift/")
 
 
-def ensure_uxrift_gitignore(wg_dir: Path) -> bool:
-    return _ensure_line_in_file(wg_dir / ".gitignore", ".uxrift/")
+def ensure_uxdrift_gitignore(wg_dir: Path) -> bool:
+    return _ensure_line_in_file(wg_dir / ".gitignore", ".uxdrift/")
 
 
 def write_tool_wrapper(wg_dir: Path, *, tool_name: str, tool_bin: Path) -> bool:
@@ -76,35 +76,35 @@ def write_speedrift_wrapper(wg_dir: Path, *, speedrift_bin: Path) -> bool:
     return write_tool_wrapper(wg_dir, tool_name="speedrift", tool_bin=speedrift_bin)
 
 
-def write_uxrift_wrapper(wg_dir: Path, *, uxrift_bin: Path) -> bool:
+def write_uxdrift_wrapper(wg_dir: Path, *, uxdrift_bin: Path) -> bool:
     """
-    Writes .workgraph/uxrift wrapper pointing at a uxrift checkout.
+    Writes .workgraph/uxdrift wrapper pointing at a uxdrift checkout.
     Returns True if file changed.
     """
 
-    return write_tool_wrapper(wg_dir, tool_name="uxrift", tool_bin=uxrift_bin)
+    return write_tool_wrapper(wg_dir, tool_name="uxdrift", tool_bin=uxdrift_bin)
 
 
-def write_rifts_wrapper(wg_dir: Path) -> bool:
+def write_drifts_wrapper(wg_dir: Path) -> bool:
     """
-    Writes .workgraph/rifts wrapper that runs speedrift (always) and uxrift (best-effort).
+    Writes .workgraph/drifts wrapper that runs speedrift (always) and uxdrift (best-effort).
 
     This is intentionally a simple bash script so it can live inside any workgraph repo
     without requiring extra installs.
     """
 
-    wrapper = wg_dir / "rifts"
+    wrapper = wg_dir / "drifts"
     content = (
         "#!/usr/bin/env bash\n"
         "set -euo pipefail\n\n"
         "usage() {\n"
         "  cat <<'EOF'\n"
-        "workgraph rifts\n\n"
+        "workgraph drifts\n\n"
         "Usage:\n"
-        "  ./.workgraph/rifts [--dir <path>] check --task <id> [--write-log] [--create-followups]\n\n"
+        "  ./.workgraph/drifts [--dir <path>] check --task <id> [--write-log] [--create-followups]\n\n"
         "Behavior:\n"
         "- Always runs speedrift for code drift.\n"
-        "- Runs uxrift only if ./.workgraph/uxrift exists AND the task description contains a ```uxrift block.\n"
+        "- Runs uxdrift only if ./.workgraph/uxdrift exists AND the task description contains a ```uxdrift block.\n"
         "EOF\n"
         "}\n\n"
         "DIR_ARG=\"\"\n"
@@ -135,7 +135,7 @@ def write_rifts_wrapper(wg_dir: Path) -> bool:
         "  WG_DIR=\"$BASE/.workgraph\"\n"
         "fi\n\n"
         "SPEEDRIFT=\"$WG_DIR/speedrift\"\n"
-        "UXRIFT=\"$WG_DIR/uxrift\"\n\n"
+        "UXDRIFT=\"$WG_DIR/uxdrift\"\n\n"
         "TASK_ID=\"\"\n"
         "WRITE_LOG=0\n"
         "CREATE_FOLLOWUPS=0\n"
@@ -149,7 +149,7 @@ def write_rifts_wrapper(wg_dir: Path) -> bool:
         "  elif [[ \"$arg\" == \"--create-followups\" ]]; then\n"
         "    CREATE_FOLLOWUPS=1\n"
         "  elif [[ \"$arg\" == \"--json\" ]]; then\n"
-        "    echo \"error: rifts check does not support --json; run ./.workgraph/speedrift check --json instead\" >&2\n"
+        "    echo \"error: drifts check does not support --json; run ./.workgraph/speedrift check --json instead\" >&2\n"
         "    exit 2\n"
         "  fi\n"
         "done\n\n"
@@ -165,23 +165,23 @@ def write_rifts_wrapper(wg_dir: Path) -> bool:
         "if [[ \"$SPEED_RC\" -ne 0 && \"$SPEED_RC\" -ne 3 ]]; then\n"
         "  exit \"$SPEED_RC\"\n"
         "fi\n\n"
-        "# uxrift is best-effort: skip if not installed or if task doesn't declare a uxrift block.\n"
+        "# uxdrift is best-effort: skip if not installed or if task doesn't declare a uxdrift block.\n"
         "UX_RC=0\n"
-        "if [[ -x \"$UXRIFT\" ]]; then\n"
-        "  HAS_UXRIFT_SPEC=0\n"
-        "  if wg --dir \"$WG_DIR\" show \"$TASK_ID\" --json 2>/dev/null | python3 -c 'import json,sys; t=json.load(sys.stdin); d=t.get(\"description\") or \"\"; sys.exit(0 if \"```uxrift\" in d else 1)'; then\n"
-        "    HAS_UXRIFT_SPEC=1\n"
+        "if [[ -x \"$UXDRIFT\" ]]; then\n"
+        "  HAS_UXDRIFT_SPEC=0\n"
+        "  if wg --dir \"$WG_DIR\" show \"$TASK_ID\" --json 2>/dev/null | python3 -c 'import json,sys; t=json.load(sys.stdin); d=t.get(\"description\") or \"\"; sys.exit(0 if \"```uxdrift\" in d else 1)'; then\n"
+        "    HAS_UXDRIFT_SPEC=1\n"
         "  fi\n\n"
-        "  if [[ \"$HAS_UXRIFT_SPEC\" -eq 1 ]]; then\n"
+        "  if [[ \"$HAS_UXDRIFT_SPEC\" -eq 1 ]]; then\n"
         "    UX_ARGS=(\"wg\" \"--dir\" \"$BASE\" \"check\" \"--task\" \"$TASK_ID\")\n"
         "    if [[ \"$WRITE_LOG\" -eq 1 ]]; then UX_ARGS+=(\"--write-log\"); fi\n"
         "    if [[ \"$CREATE_FOLLOWUPS\" -eq 1 ]]; then UX_ARGS+=(\"--create-followups\"); fi\n"
         "    set +e\n"
-        "    \"$UXRIFT\" \"${UX_ARGS[@]}\"\n"
+        "    \"$UXDRIFT\" \"${UX_ARGS[@]}\"\n"
         "    UX_RC=$?\n"
         "    set -e\n"
         "    if [[ \"$UX_RC\" -ne 0 && \"$UX_RC\" -ne 3 ]]; then\n"
-        "      echo \"note: uxrift failed (exit $UX_RC); continuing\" >&2\n"
+        "      echo \"note: uxdrift failed (exit $UX_RC); continuing\" >&2\n"
         "      UX_RC=0\n"
         "    fi\n"
         "  fi\n"
@@ -200,18 +200,18 @@ def write_rifts_wrapper(wg_dir: Path) -> bool:
     return changed
 
 
-def _default_claude_executor_text(*, project_dir: Path, include_uxrift: bool) -> str:
+def _default_claude_executor_text(*, project_dir: Path, include_uxdrift: bool) -> str:
     # Keep this lightweight and generic: the "contract" is the task description.
-    uxrift = ""
-    if include_uxrift:
-        uxrift = (
+    uxdrift = ""
+    if include_uxdrift:
+        uxdrift = (
             "\n"
-            f"{UXRIFT_MARKER}\n"
-            "- If this task includes a `uxrift` block (in the description), run:\n"
-            f"  ./.workgraph/uxrift wg check --task {{{{task_id}}}} --write-log --create-followups\n"
-            "- Or run the unified check (runs uxrift when a spec is present):\n"
-            f"  ./.workgraph/rifts check --task {{{{task_id}}}} --write-log --create-followups\n"
-            "- If it fails due to missing URL, set `url = \"...\"` in the `uxrift` block or pass --url.\n"
+            f"{UXDRIFT_MARKER}\n"
+            "- If this task includes a `uxdrift` block (in the description), run:\n"
+            f"  ./.workgraph/uxdrift wg check --task {{{{task_id}}}} --write-log --create-followups\n"
+            "- Or run the unified check (runs uxdrift when a spec is present):\n"
+            f"  ./.workgraph/drifts check --task {{{{task_id}}}} --write-log --create-followups\n"
+            "- If it fails due to missing URL, set `url = \"...\"` in the `uxdrift` block or pass --url.\n"
         )
 
     return f"""[executor]
@@ -234,11 +234,11 @@ Context from dependencies:
 {SPEEDRIFT_MARKER}
 - Treat the `wg-contract` block (in the task description) as binding.
 - At start and just before completion, run:
-  ./.workgraph/rifts check --task {{{{task_id}}}} --write-log --create-followups
+  ./.workgraph/drifts check --task {{{{task_id}}}} --write-log --create-followups
 - If you need to change scope, update touch globs:
   ./.workgraph/speedrift contract set-touch --task {{{{task_id}}}} <globs...>
 - If Speedrift flags `hardening_in_core`, do NOT add guardrails here; create/complete the `harden:` follow-up task.
-{uxrift}
+{uxdrift}
 
 ## Workgraph Rules
 - Stay focused on this task.
@@ -264,7 +264,7 @@ def _inject_speedrift_into_template(body: str) -> str | None:
     if SPEEDRIFT_MARKER in body:
         # Upgrade existing protocol blocks in-place if they reference speedrift directly.
         old = "  ./.workgraph/speedrift check --task {{task_id}} --write-log --create-followups"
-        new = "  ./.workgraph/rifts check --task {{task_id}} --write-log --create-followups"
+        new = "  ./.workgraph/drifts check --task {{task_id}} --write-log --create-followups"
         upgraded = body.replace(old, new)
         if upgraded != body:
             return upgraded
@@ -284,7 +284,7 @@ def _inject_speedrift_into_template(body: str) -> str | None:
         f"{SPEEDRIFT_MARKER}\n"
         "- Treat the `wg-contract` block (in the task description) as binding.\n"
         "- At start and just before completion, run:\n"
-        "  ./.workgraph/rifts check --task {{task_id}} --write-log --create-followups\n"
+        "  ./.workgraph/drifts check --task {{task_id}} --write-log --create-followups\n"
         "- If you need to change scope, update touch globs:\n"
         "  ./.workgraph/speedrift contract set-touch --task {{task_id}} <globs...>\n"
         "- If Speedrift flags `hardening_in_core`, do NOT add guardrails here; create/complete the `harden:` follow-up task.\n"
@@ -295,12 +295,12 @@ def _inject_speedrift_into_template(body: str) -> str | None:
     return new_body
 
 
-def _inject_uxrift_into_template(body: str) -> str | None:
+def _inject_uxdrift_into_template(body: str) -> str | None:
     """
     Returns modified file text, or None if no changes needed/possible.
     """
 
-    if UXRIFT_MARKER in body:
+    if UXDRIFT_MARKER in body:
         return None
 
     m = _TEMPLATE_START_RE.search(body)
@@ -314,13 +314,13 @@ def _inject_uxrift_into_template(body: str) -> str | None:
 
     insert = (
         "\n"
-        f"{UXRIFT_MARKER}\n"
-        "- If this task includes a `uxrift` block (in the description), run:\n"
-        "  ./.workgraph/uxrift wg check --task {{task_id}} --write-log --create-followups\n"
-        "- Or run the unified check (runs uxrift when a spec is present):\n"
-        "  ./.workgraph/rifts check --task {{task_id}} --write-log --create-followups\n"
-        "- If it fails due to missing URL, set `url = \"...\"` in the `uxrift` block or pass --url.\n"
-        "- Artifacts live under `.workgraph/.uxrift/`.\n"
+        f"{UXDRIFT_MARKER}\n"
+        "- If this task includes a `uxdrift` block (in the description), run:\n"
+        "  ./.workgraph/uxdrift wg check --task {{task_id}} --write-log --create-followups\n"
+        "- Or run the unified check (runs uxdrift when a spec is present):\n"
+        "  ./.workgraph/drifts check --task {{task_id}} --write-log --create-followups\n"
+        "- If it fails due to missing URL, set `url = \"...\"` in the `uxdrift` block or pass --url.\n"
+        "- Artifacts live under `.workgraph/.uxdrift/`.\n"
     )
 
     # Insert right before the closing triple quotes.
@@ -328,7 +328,7 @@ def _inject_uxrift_into_template(body: str) -> str | None:
     return new_body
 
 
-def ensure_executor_guidance(wg_dir: Path, *, include_uxrift: bool = False) -> tuple[bool, list[str]]:
+def ensure_executor_guidance(wg_dir: Path, *, include_uxdrift: bool = False) -> tuple[bool, list[str]]:
     """
     Ensures .workgraph/executors exists, has a claude executor, and each executor template
     includes Speedrift guidance. Returns (created_claude_executor, patched_files).
@@ -341,7 +341,7 @@ def ensure_executor_guidance(wg_dir: Path, *, include_uxrift: bool = False) -> t
     claude_path = executors_dir / "claude.toml"
     if not claude_path.exists():
         claude_path.write_text(
-            _default_claude_executor_text(project_dir=wg_dir.parent, include_uxrift=include_uxrift),
+            _default_claude_executor_text(project_dir=wg_dir.parent, include_uxdrift=include_uxdrift),
             encoding="utf-8",
         )
         created = True
@@ -357,8 +357,8 @@ def ensure_executor_guidance(wg_dir: Path, *, include_uxrift: bool = False) -> t
             cur = new_text
             changed = True
 
-        if include_uxrift:
-            new_text = _inject_uxrift_into_template(cur)
+        if include_uxdrift:
+            new_text = _inject_uxdrift_into_template(cur)
             if new_text is not None:
                 cur = new_text
                 changed = True
