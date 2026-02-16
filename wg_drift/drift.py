@@ -169,7 +169,7 @@ def compute_drift(
                     "priority": "high",
                     "action": "Add a wg-contract block to the task description",
                     "rationale": "Without an explicit contract, agents will improvise and scope will drift.",
-                    "commands": ["speedrift ensure-contracts --apply"],
+                    "commands": ["coredrift ensure-contracts --apply"],
                 }
             )
         elif kind == "invalid_contract":
@@ -177,7 +177,7 @@ def compute_drift(
                 {
                     "priority": "high",
                     "action": "Fix the wg-contract block TOML so it parses",
-                    "rationale": "Speedrift can only enforce/advise against drift when it can read the contract.",
+                    "rationale": "Coredrift can only enforce/advise against drift when it can read the contract.",
                 }
             )
         elif kind == "scope_drift":
@@ -186,7 +186,7 @@ def compute_drift(
                     "priority": "high",
                     "action": "Revert out-of-scope file changes or expand touch globs",
                     "rationale": "Out-of-scope edits are the fastest path to unintended refactors and long-term performance regressions.",
-                    "commands": ["speedrift contract set-touch --task <id> <glob...>"],
+                    "commands": ["coredrift contract set-touch --task <id> <glob...>"],
                 }
             )
         elif kind == "hardening_in_core":

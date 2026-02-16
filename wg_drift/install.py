@@ -5,7 +5,7 @@ import stat
 from dataclasses import dataclass
 from pathlib import Path
 
-SPEEDRIFT_MARKER = "## Speedrift Protocol"
+COREDRIFT_MARKER = "## Coredrift Protocol"
 UXDRIFT_MARKER = "## uxdrift Protocol"
 
 
@@ -38,8 +38,8 @@ def _ensure_line_in_file(path: Path, line: str) -> bool:
     return True
 
 
-def ensure_speedrift_gitignore(wg_dir: Path) -> bool:
-    return _ensure_line_in_file(wg_dir / ".gitignore", ".speedrift/")
+def ensure_coredrift_gitignore(wg_dir: Path) -> bool:
+    return _ensure_line_in_file(wg_dir / ".gitignore", ".coredrift/")
 
 
 def ensure_uxdrift_gitignore(wg_dir: Path) -> bool:
@@ -67,13 +67,13 @@ def write_tool_wrapper(wg_dir: Path, *, tool_name: str, tool_bin: Path) -> bool:
     return changed
 
 
-def write_speedrift_wrapper(wg_dir: Path, *, speedrift_bin: Path) -> bool:
+def write_coredrift_wrapper(wg_dir: Path, *, coredrift_bin: Path) -> bool:
     """
-    Writes .workgraph/speedrift wrapper pointing at the current speedrift checkout.
+    Writes .workgraph/coredrift wrapper pointing at the current coredrift checkout.
     Returns True if file changed.
     """
 
-    return write_tool_wrapper(wg_dir, tool_name="speedrift", tool_bin=speedrift_bin)
+    return write_tool_wrapper(wg_dir, tool_name="coredrift", tool_bin=coredrift_bin)
 
 
 def write_uxdrift_wrapper(wg_dir: Path, *, uxdrift_bin: Path) -> bool:
@@ -87,7 +87,7 @@ def write_uxdrift_wrapper(wg_dir: Path, *, uxdrift_bin: Path) -> bool:
 
 def write_drifts_wrapper(wg_dir: Path) -> bool:
     """
-    Writes .workgraph/drifts wrapper that runs speedrift (always) and uxdrift (best-effort).
+    Writes .workgraph/drifts wrapper that runs coredrift (always) and uxdrift (best-effort).
 
     This is intentionally a simple bash script so it can live inside any workgraph repo
     without requiring extra installs.
@@ -103,7 +103,7 @@ def write_drifts_wrapper(wg_dir: Path) -> bool:
         "Usage:\n"
         "  ./.workgraph/drifts [--dir <path>] check --task <id> [--write-log] [--create-followups]\n\n"
         "Behavior:\n"
-        "- Always runs speedrift for code drift.\n"
+        "- Always runs coredrift for code drift.\n"
         "- Runs uxdrift only if ./.workgraph/uxdrift exists AND the task description contains a ```uxdrift block.\n"
         "EOF\n"
         "}\n\n"
@@ -134,7 +134,7 @@ def write_drifts_wrapper(wg_dir: Path) -> bool:
         "if [[ \"$(basename \"$WG_DIR\")\" != \".workgraph\" ]]; then\n"
         "  WG_DIR=\"$BASE/.workgraph\"\n"
         "fi\n\n"
-        "SPEEDRIFT=\"$WG_DIR/speedrift\"\n"
+        "COREDRIFT=\"$WG_DIR/coredrift\"\n"
         "UXDRIFT=\"$WG_DIR/uxdrift\"\n\n"
         "TASK_ID=\"\"\n"
         "WRITE_LOG=0\n"
@@ -149,7 +149,7 @@ def write_drifts_wrapper(wg_dir: Path) -> bool:
         "  elif [[ \"$arg\" == \"--create-followups\" ]]; then\n"
         "    CREATE_FOLLOWUPS=1\n"
         "  elif [[ \"$arg\" == \"--json\" ]]; then\n"
-        "    echo \"error: drifts check does not support --json; run ./.workgraph/speedrift check --json instead\" >&2\n"
+        "    echo \"error: drifts check does not support --json; run ./.workgraph/coredrift check --json instead\" >&2\n"
         "    exit 2\n"
         "  fi\n"
         "done\n\n"
@@ -159,7 +159,7 @@ def write_drifts_wrapper(wg_dir: Path) -> bool:
         "  exit 2\n"
         "fi\n\n"
         "set +e\n"
-        "\"$SPEEDRIFT\" --dir \"$BASE\" check \"$@\"\n"
+        "\"$COREDRIFT\" --dir \"$BASE\" check \"$@\"\n"
         "SPEED_RC=$?\n"
         "set -e\n\n"
         "if [[ \"$SPEED_RC\" -ne 0 && \"$SPEED_RC\" -ne 3 ]]; then\n"
@@ -231,13 +231,13 @@ Description:
 Context from dependencies:
 {{{{task_context}}}}
 
-{SPEEDRIFT_MARKER}
+{COREDRIFT_MARKER}
 - Treat the `wg-contract` block (in the task description) as binding.
 - At start and just before completion, run:
   ./.workgraph/drifts check --task {{{{task_id}}}} --write-log --create-followups
 - If you need to change scope, update touch globs:
-  ./.workgraph/speedrift contract set-touch --task {{{{task_id}}}} <globs...>
-- If Speedrift flags `hardening_in_core`, do NOT add guardrails here; create/complete the `harden:` follow-up task.
+  ./.workgraph/coredrift contract set-touch --task {{{{task_id}}}} <globs...>
+- If Coredrift flags `hardening_in_core`, do NOT add guardrails here; create/complete the `harden:` follow-up task.
 {uxdrift}
 
 ## Workgraph Rules
@@ -256,14 +256,14 @@ Context from dependencies:
 _TEMPLATE_START_RE = re.compile(r'(?P<prefix>\btemplate\s*=\s*"""\r?\n)', re.MULTILINE)
 
 
-def _inject_speedrift_into_template(body: str) -> str | None:
+def _inject_coredrift_into_template(body: str) -> str | None:
     """
     Returns modified file text, or None if no changes needed/possible.
     """
 
-    if SPEEDRIFT_MARKER in body:
-        # Upgrade existing protocol blocks in-place if they reference speedrift directly.
-        old = "  ./.workgraph/speedrift check --task {{task_id}} --write-log --create-followups"
+    if COREDRIFT_MARKER in body:
+        # Upgrade existing protocol blocks in-place if they reference coredrift directly.
+        old = "  ./.workgraph/coredrift check --task {{task_id}} --write-log --create-followups"
         new = "  ./.workgraph/drifts check --task {{task_id}} --write-log --create-followups"
         upgraded = body.replace(old, new)
         if upgraded != body:
@@ -281,13 +281,13 @@ def _inject_speedrift_into_template(body: str) -> str | None:
 
     insert = (
         "\n"
-        f"{SPEEDRIFT_MARKER}\n"
+        f"{COREDRIFT_MARKER}\n"
         "- Treat the `wg-contract` block (in the task description) as binding.\n"
         "- At start and just before completion, run:\n"
         "  ./.workgraph/drifts check --task {{task_id}} --write-log --create-followups\n"
         "- If you need to change scope, update touch globs:\n"
-        "  ./.workgraph/speedrift contract set-touch --task {{task_id}} <globs...>\n"
-        "- If Speedrift flags `hardening_in_core`, do NOT add guardrails here; create/complete the `harden:` follow-up task.\n"
+        "  ./.workgraph/coredrift contract set-touch --task {{task_id}} <globs...>\n"
+        "- If Coredrift flags `hardening_in_core`, do NOT add guardrails here; create/complete the `harden:` follow-up task.\n"
     )
 
     # Insert right before the closing triple quotes.
@@ -331,7 +331,7 @@ def _inject_uxdrift_into_template(body: str) -> str | None:
 def ensure_executor_guidance(wg_dir: Path, *, include_uxdrift: bool = False) -> tuple[bool, list[str]]:
     """
     Ensures .workgraph/executors exists, has a claude executor, and each executor template
-    includes Speedrift guidance. Returns (created_claude_executor, patched_files).
+    includes Coredrift guidance. Returns (created_claude_executor, patched_files).
     """
 
     executors_dir = wg_dir / "executors"
@@ -352,7 +352,7 @@ def ensure_executor_guidance(wg_dir: Path, *, include_uxdrift: bool = False) -> 
         cur = text
         changed = False
 
-        new_text = _inject_speedrift_into_template(cur)
+        new_text = _inject_coredrift_into_template(cur)
         if new_text is not None:
             cur = new_text
             changed = True

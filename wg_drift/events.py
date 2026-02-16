@@ -11,7 +11,7 @@ def _now_iso() -> str:
 
 
 def events_path(wg_dir: Path) -> Path:
-    return wg_dir / ".speedrift" / "events.jsonl"
+    return wg_dir / ".coredrift" / "events.jsonl"
 
 
 def append_event(wg_dir: Path, event: dict[str, Any]) -> None:

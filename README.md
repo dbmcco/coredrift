@@ -1,6 +1,6 @@
-# Speedrift
+# Coredrift
 
-Speedrift is a small sidecar tool for [workgraph](https://graphwork.github.io/) that reduces agent/task drift without hard-blocking development.
+Coredrift is a small sidecar tool for [workgraph](https://graphwork.github.io/) that reduces agent/task drift without hard-blocking development.
 
 It does 3 things:
 1. Stores a tiny, machine-readable **task contract** inside the workgraph task `description`.
@@ -14,17 +14,17 @@ This project is part of the Speedrift suite for Workgraph-first drift control.
 - Suite home: [speedrift-ecosystem](https://github.com/dbmcco/speedrift-ecosystem)
 - Spine: [Workgraph](https://graphwork.github.io/)
 - Orchestrator: [driftdriver](https://github.com/dbmcco/driftdriver)
-- Baseline lane: [speedrift](https://github.com/dbmcco/speedrift)
+- Baseline lane: [coredrift](https://github.com/dbmcco/coredrift)
 - Optional lanes: [specdrift](https://github.com/dbmcco/specdrift), [datadrift](https://github.com/dbmcco/datadrift), [depsdrift](https://github.com/dbmcco/depsdrift), [uxdrift](https://github.com/dbmcco/uxdrift), [therapydrift](https://github.com/dbmcco/therapydrift), [yagnidrift](https://github.com/dbmcco/yagnidrift), [redrift](https://github.com/dbmcco/redrift)
 
 ## Concept (Motorsports)
 
-Speedrift treats drift like motorsports drifting: you don't ban drift, you keep it **controlled at speed**.
+Coredrift treats drift like motorsports drifting: you don't ban drift, you keep it **controlled at speed**.
 
 - **Contract**: the intended racing line (objective, non-goals, touch set, budgets).
 - **Telemetry**: drift score + findings from actual diffs.
 - **Countersteer**: actionable recommendations when drift appears.
-- **Pit stop**: if drift persists over multiple checks, Speedrift can spawn a `pit-stop:` task to re-sync.
+- **Pit stop**: if drift persists over multiple checks, Coredrift can spawn a `pit-stop:` task to re-sync.
 
 ## Why `description` (not JSON fields)?
 
@@ -65,10 +65,10 @@ Notes:
 
 ### One-Time Setup (Per Workgraph Repo)
 
-From the repo you want to run Speedrift in (Speedrift will run `wg init` if needed):
+From the repo you want to run Coredrift in (Coredrift will run `wg init` if needed):
 
 ```bash
-speedrift install
+coredrift install
 ```
 
 If you are using the broader `drifts` suite, prefer the unified installer:
@@ -81,15 +81,15 @@ Optional (if you also use `uxdrift`):
 
 ```bash
 # Best-effort autodetect (looks at $UXDRIFT_BIN, a sibling ../uxdrift checkout, or uxdrift on PATH)
-speedrift install --with-uxdrift
+coredrift install --with-uxdrift
 
 # Or be explicit:
-speedrift install --uxdrift-bin /path/to/uxdrift/bin/uxdrift
+coredrift install --uxdrift-bin /path/to/uxdrift/bin/uxdrift
 ```
 
 This creates:
-- `./.workgraph/speedrift` (a wrapper)
-- `./.workgraph/.gitignore` entry for `.speedrift/` state
+- `./.workgraph/coredrift` (a wrapper)
+- `./.workgraph/.gitignore` entry for `.coredrift/` state
 - executor prompt guidance under `./.workgraph/executors/` (so spawned agents know the protocol)
 - (optional) `./.workgraph/uxdrift` wrapper + `.uxdrift/` ignore + executor guidance for `uxdrift`
 
@@ -99,53 +99,53 @@ When you start a new project (or come back after a break), do this from the repo
 
 ```bash
 # 1) Ensure wrapper + executor guidance are installed (idempotent)
-speedrift install
+coredrift install
 
 # 2) Ensure every open/in-progress task has a default contract (idempotent)
-./.workgraph/speedrift ensure-contracts --apply
+./.workgraph/coredrift ensure-contracts --apply
 
 # 3) Write the current drift snapshot into workgraph + spawn follow-ups (optional but recommended)
-./.workgraph/speedrift scan --write-log --create-followups
+./.workgraph/coredrift scan --write-log --create-followups
 
 # 4) Keep a drift sidecar running while work happens
-./.workgraph/speedrift orchestrate --write-log --create-followups --interval 30 --redirect-interval 5
+./.workgraph/coredrift orchestrate --write-log --create-followups --interval 30 --redirect-interval 5
 ```
 
 How this coordinates with Workgraph:
-- Speedrift stores the contract in the task `description` (as a `wg-contract` fenced block).
-- `speedrift install` patches/creates `.workgraph/executors/*.toml` prompt templates with a **Speedrift Protocol** section.
-  That means any agent spawned via those executors sees the “run Speedrift at start/before done” instructions automatically.
-- Drift never hard-blocks: Speedrift writes `wg log` entries and spawns follow-up tasks (for example `harden:`) instead.
+- Coredrift stores the contract in the task `description` (as a `wg-contract` fenced block).
+- `coredrift install` patches/creates `.workgraph/executors/*.toml` prompt templates with a **Coredrift Protocol** section.
+  That means any agent spawned via those executors sees the “run Coredrift at start/before done” instructions automatically.
+- Drift never hard-blocks: Coredrift writes `wg log` entries and spawns follow-up tasks (for example `harden:`) instead.
 
 ### Daily Use
 
 From that repo:
 
 ```bash
-# Unified one-command check (via driftdriver: runs speedrift always; runs optional drifts when the task declares specs)
+# Unified one-command check (via driftdriver: runs coredrift always; runs optional drifts when the task declares specs)
 ./.workgraph/drifts check --task <id> --write-log --create-followups
 
 # Show drift report for the only in-progress task (or pass --task <id>)
-./.workgraph/speedrift check
+./.workgraph/coredrift check
 
 # Scan all in-progress tasks and wg-log findings; optionally create followups
-./.workgraph/speedrift scan --write-log --create-followups
+./.workgraph/coredrift scan --write-log --create-followups
 
 # Continuous mode (useful as a background sidecar)
-./.workgraph/speedrift watch --write-log --create-followups --interval 30
+./.workgraph/coredrift watch --write-log --create-followups --interval 30
 
 # Orchestrated mode (two agents, parallel)
-./.workgraph/speedrift orchestrate --write-log --create-followups --interval 30 --redirect-interval 5
+./.workgraph/coredrift orchestrate --write-log --create-followups --interval 30 --redirect-interval 5
 
 # Inspect or edit contracts (edits graph.jsonl)
-./.workgraph/speedrift contract show --task <id>
-./.workgraph/speedrift contract set-touch --task <id> src/** tests/**
+./.workgraph/coredrift contract show --task <id>
+./.workgraph/coredrift contract set-touch --task <id> src/** tests/**
 
 # Ensure every open/in-progress task has a default contract block (edits graph.jsonl)
-./.workgraph/speedrift ensure-contracts --apply
+./.workgraph/coredrift ensure-contracts --apply
 ```
 
-In the Speedrift repo itself, run `./bin/speedrift` from the checkout root.
+In the Coredrift repo itself, run `./bin/coredrift` from the checkout root.
 
 ## Testing
 
@@ -156,11 +156,11 @@ scripts/e2e_smoke.sh
 
 ## State
 
-Speedrift stores drift history in `.workgraph/.speedrift/state.json` (ignored by drift checks).
+Coredrift stores drift history in `.workgraph/.coredrift/state.json` (ignored by drift checks).
 
 It can also run in a split-agent mode:
-- `speedrift monitor`: telemetry agent that appends drift reports to `.workgraph/.speedrift/events.jsonl`
-- `speedrift redirect`: redirect agent that consumes events and applies actions (`wg log`, follow-ups, pit-stops)
+- `coredrift monitor`: telemetry agent that appends drift reports to `.workgraph/.coredrift/events.jsonl`
+- `coredrift redirect`: redirect agent that consumes events and applies actions (`wg log`, follow-ups, pit-stops)
 
 ## Roadmap / Upstream PR Ideas
 

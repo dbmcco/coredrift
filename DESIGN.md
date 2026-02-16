@@ -1,4 +1,4 @@
-# Speedrift Design
+# Coredrift Design
 
 ## Goals
 
@@ -8,7 +8,7 @@
 
 ## Non-Goals
 
-- No mandatory gates: Speedrift is advisory by default.
+- No mandatory gates: Coredrift is advisory by default.
 - No full semantic correctness checks: detection is heuristic and biased toward low false-negative drift categories.
 
 ## Core Objects
@@ -47,32 +47,32 @@ Outputs:
 
 ### Drift State
 
-Persisted in `.workgraph/.speedrift/state.json`:
+Persisted in `.workgraph/.coredrift/state.json`:
 - last score/kinds
 - drift streak counter
 - whether a pit-stop escalation has been created
 
-This lets Speedrift escalate based on **persistence** (not just a single snapshot).
+This lets Coredrift escalate based on **persistence** (not just a single snapshot).
 
 ## Behaviors
 
 ### Telemetry and Countersteer
 
-When drift is detected, Speedrift emits recommendations like:
+When drift is detected, Coredrift emits recommendations like:
 - "revert out-of-scope changes or expand touch globs"
 - "move guardrails into a `harden:` follow-up task"
 
 ### Orchestrated Agents (Monitor + Redirect)
 
-Speedrift supports an “orchestrated” two-agent loop:
-- **monitor**: computes drift reports and appends JSONL events to `.workgraph/.speedrift/events.jsonl`
+Coredrift supports an “orchestrated” two-agent loop:
+- **monitor**: computes drift reports and appends JSONL events to `.workgraph/.coredrift/events.jsonl`
 - **redirect**: consumes events, updates drift state, and applies actions (`wg log`, follow-ups, pit-stops)
 
 This keeps monitoring lightweight and lets redirect actions run independently (parallelism and responsibility isolation).
 
 ### Follow-Up Tasks (No Hard Blocks)
 
-With `--create-followups`, Speedrift creates deterministic tasks:
+With `--create-followups`, Coredrift creates deterministic tasks:
 - `drift-harden-<task>` (blocked by origin)
 - `drift-scope-<task>` (blocked by origin)
 
@@ -80,23 +80,23 @@ These convert “agent anxiety” into explicit downstream work.
 
 ### Pit Stop Escalation
 
-If a core task stays yellow for `pit_stop_after` consecutive checks, Speedrift can spawn:
-- `speedrift-pit-<task>` (`pit-stop: <task title>`) blocked by origin
+If a core task stays yellow for `pit_stop_after` consecutive checks, Coredrift can spawn:
+- `coredrift-pit-<task>` (`pit-stop: <task title>`) blocked by origin
 
 This is meant to “drag the project back in sync” without blocking the current task mid-flight.
 
 ## Workgraph Integration Points
 
-- `wg log`: Speedrift writes one-line summaries back onto tasks.
-- `wg add`: Speedrift creates follow-up tasks as additional graph nodes.
-- `graph.jsonl` rewriting: Speedrift edits task descriptions for contract injection and `contract set-touch`.
+- `wg log`: Coredrift writes one-line summaries back onto tasks.
+- `wg add`: Coredrift creates follow-up tasks as additional graph nodes.
+- `graph.jsonl` rewriting: Coredrift edits task descriptions for contract injection and `contract set-touch`.
 
 ## Installation / Agent Guidance
 
-Speedrift can install itself into a workgraph repo via `speedrift install`, which:
-- Creates `./.workgraph/speedrift` wrapper pinned to the Speedrift checkout.
-- Adds `.speedrift/` to `./.workgraph/.gitignore` (state + events).
-- Ensures executor prompt templates under `./.workgraph/executors/` include the **Speedrift Protocol** so spawned agents know what to do.
+Coredrift can install itself into a workgraph repo via `coredrift install`, which:
+- Creates `./.workgraph/coredrift` wrapper pinned to the Coredrift checkout.
+- Adds `.coredrift/` to `./.workgraph/.gitignore` (state + events).
+- Ensures executor prompt templates under `./.workgraph/executors/` include the **Coredrift Protocol** so spawned agents know what to do.
 
 ## Upstream Improvements
 

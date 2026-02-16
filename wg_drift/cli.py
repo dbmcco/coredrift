@@ -23,10 +23,10 @@ from wg_drift.events import append_event, events_path, read_events_since
 from wg_drift.git_tools import get_git_root, get_working_changes
 from wg_drift.install import (
     ensure_executor_guidance,
-    ensure_speedrift_gitignore,
+    ensure_coredrift_gitignore,
     ensure_uxdrift_gitignore,
     write_drifts_wrapper,
-    write_speedrift_wrapper,
+    write_coredrift_wrapper,
     write_uxdrift_wrapper,
 )
 from wg_drift.state import locked_state, mark_pit_stop_created, update_task_state
@@ -48,12 +48,12 @@ class ExitCode:
 
 
 def _parse_args(argv: list[str]) -> argparse.Namespace:
-    p = argparse.ArgumentParser(prog="speedrift", add_help=True)
+    p = argparse.ArgumentParser(prog="coredrift", add_help=True)
     p.add_argument("--dir", help="Path to .workgraph directory (default: search upward from cwd)")
 
     sub = p.add_subparsers(dest="cmd", required=True)
 
-    install = sub.add_parser("install", help="Install Speedrift into a workgraph (wrapper, ignore, executor guidance)")
+    install = sub.add_parser("install", help="Install Coredrift into a workgraph (wrapper, ignore, executor guidance)")
     install.add_argument("--no-ensure-contracts", action="store_true", help="Do not inject default contracts into tasks")
     install.add_argument(
         "--with-uxdrift",
@@ -79,7 +79,7 @@ def _parse_args(argv: list[str]) -> argparse.Namespace:
     watch.add_argument("--write-log", action="store_true", help="Write a drift summary to wg log")
     watch.add_argument("--json", action="store_true", help="Output periodic reports as JSON (stdout)")
 
-    monitor = sub.add_parser("monitor", help="Telemetry agent: emit drift reports to .workgraph/.speedrift/events.jsonl")
+    monitor = sub.add_parser("monitor", help="Telemetry agent: emit drift reports to .workgraph/.coredrift/events.jsonl")
     monitor.add_argument("--interval", type=int, default=30, help="Poll interval seconds (default: 30)")
     monitor.add_argument("--once", action="store_true", help="Run one iteration and exit")
     monitor.add_argument("--task", help="Only emit for a specific task id (debug)")
@@ -161,10 +161,10 @@ def _maybe_write_log(wg: Workgraph, task_id: str, report: dict[str, Any]) -> Non
     recs = report.get("recommendations", [])
 
     if not findings:
-        msg = "Speedrift: OK (no findings)"
+        msg = "Coredrift: OK (no findings)"
     else:
         kinds = ", ".join(sorted({str(f.get('kind')) for f in findings}))
-        msg = f"Speedrift: {score} ({kinds})"
+        msg = f"Coredrift: {score} ({kinds})"
         if recs:
             next_action = str(recs[0].get("action") or "").strip()
             if next_action:
@@ -236,7 +236,7 @@ def _maybe_create_pit_stop(wg: Workgraph, report: dict[str, Any], *, streak: int
     if mode != "core":
         return None
 
-    pit_id = f"speedrift-pit-{task_id}"
+    pit_id = f"coredrift-pit-{task_id}"
     title = f"pit-stop: {task_title}"
 
     findings = report.get("findings", [])
@@ -267,7 +267,7 @@ def _maybe_create_pit_stop(wg: Workgraph, report: dict[str, Any], *, streak: int
         title=title,
         description=desc,
         blocked_by=[task_id],
-        tags=["speedrift", "pit-stop", "drift"],
+        tags=["coredrift", "pit-stop", "drift"],
     )
     return pit_id
 
@@ -316,14 +316,14 @@ def main(argv: list[str] | None = None) -> int:
                 subprocess.check_call(["wg", "init", "--dir", str(wg_dir)])
 
             # Create wrapper and guidance in the target project.
-            speedrift_bin = (Path(__file__).resolve().parents[1] / "bin" / "speedrift").resolve()
-            if not speedrift_bin.exists():
-                which = shutil.which("speedrift")
+            coredrift_bin = (Path(__file__).resolve().parents[1] / "bin" / "coredrift").resolve()
+            if not coredrift_bin.exists():
+                which = shutil.which("coredrift")
                 if not which:
-                    raise ValueError("speedrift executable not found on PATH; install speedrift or run from a checkout.")
-                speedrift_bin = Path(which).resolve()
-            write_speedrift_wrapper(wg_dir, speedrift_bin=speedrift_bin)
-            ensure_speedrift_gitignore(wg_dir)
+                    raise ValueError("coredrift executable not found on PATH; install coredrift or run from a checkout.")
+                coredrift_bin = Path(which).resolve()
+            write_coredrift_wrapper(wg_dir, coredrift_bin=coredrift_bin)
+            ensure_coredrift_gitignore(wg_dir)
             write_drifts_wrapper(wg_dir)
 
             include_uxdrift = False
@@ -373,7 +373,7 @@ def main(argv: list[str] | None = None) -> int:
             if not args.no_ensure_contracts:
                 rewrite_graph_with_contracts(wg_dir=wg_dir, statuses={"open", "in-progress"}, apply=True)
 
-            msg = f"Installed Speedrift into {wg_dir}"
+            msg = f"Installed Coredrift into {wg_dir}"
             if include_uxdrift:
                 msg += " (with uxdrift)"
             print(msg)

@@ -41,10 +41,10 @@ args = ["--print"]
 
 [executor.prompt_template]
 template = """
-## Speedrift Protocol
+## Coredrift Protocol
 - Treat the `wg-contract` block (in the task description) as binding.
 - At start and just before completion, run:
-  ./.workgraph/speedrift check --task {{task_id}} --write-log --create-followups
+  ./.workgraph/coredrift check --task {{task_id}} --write-log --create-followups
 """
 TOML
 
@@ -58,14 +58,14 @@ exit 0
 SH
 chmod +x "$UXDRIFT_DUMMY"
 
-"$ROOT/bin/speedrift" --dir "$TMPDIR" install --uxdrift-bin "$UXDRIFT_DUMMY" >/dev/null
-test -x "$TMPDIR/.workgraph/speedrift"
+"$ROOT/bin/coredrift" --dir "$TMPDIR" install --uxdrift-bin "$UXDRIFT_DUMMY" >/dev/null
+test -x "$TMPDIR/.workgraph/coredrift"
 test -x "$TMPDIR/.workgraph/drifts"
 test -x "$TMPDIR/.workgraph/uxdrift"
-rg -n "## Speedrift Protocol" "$TMPDIR/.workgraph/executors/claude.toml" >/dev/null
-rg -n "## Speedrift Protocol" "$TMPDIR/.workgraph/executors/custom.toml" >/dev/null
+rg -n "## Coredrift Protocol" "$TMPDIR/.workgraph/executors/claude.toml" >/dev/null
+rg -n "## Coredrift Protocol" "$TMPDIR/.workgraph/executors/custom.toml" >/dev/null
 rg -n "\\./\\.workgraph/drifts check" "$TMPDIR/.workgraph/executors/custom.toml" >/dev/null
-rg -n "^\\.speedrift/$" "$TMPDIR/.workgraph/.gitignore" >/dev/null
+rg -n "^\\.coredrift/$" "$TMPDIR/.workgraph/.gitignore" >/dev/null
 rg -n "## uxdrift Protocol" "$TMPDIR/.workgraph/executors/claude.toml" >/dev/null
 rg -n "## uxdrift Protocol" "$TMPDIR/.workgraph/executors/custom.toml" >/dev/null
 rg -n "^\\.uxdrift/$" "$TMPDIR/.workgraph/.gitignore" >/dev/null
@@ -98,28 +98,28 @@ wg claim core-task --actor tester >/dev/null
 echo "readme" > README.md
 printf '\n# fallback path\n' >> src/app.py
 
-echo "1) speedrift check reports findings"
+echo "1) coredrift check reports findings"
 set +e
-REPORT="$(./.workgraph/speedrift --dir "$TMPDIR" check --json)"
+REPORT="$(./.workgraph/coredrift --dir "$TMPDIR" check --json)"
 CODE="$?"
 set -e
 if [[ "$CODE" -ne 0 && "$CODE" -ne 3 ]]; then
-  echo "error: speedrift check failed with exit code $CODE" >&2
+  echo "error: coredrift check failed with exit code $CODE" >&2
   exit "$CODE"
 fi
 python3 -c 'import json,sys; r=json.loads(sys.stdin.read()); kinds={f["kind"] for f in r.get("findings", [])}; assert "scope_drift" in kinds, kinds; assert "hardening_in_core" in kinds, kinds; print("ok")' <<<"$REPORT"
 
-echo "2) speedrift can write wg log and create follow-up tasks"
+echo "2) coredrift can write wg log and create follow-up tasks"
 set +e
-./.workgraph/speedrift --dir "$TMPDIR" check --write-log --create-followups >/dev/null
+./.workgraph/coredrift --dir "$TMPDIR" check --write-log --create-followups >/dev/null
 CODE="$?"
 set -e
 if [[ "$CODE" -ne 0 && "$CODE" -ne 3 ]]; then
-  echo "error: speedrift check (write-log/followups) failed with exit code $CODE" >&2
+  echo "error: coredrift check (write-log/followups) failed with exit code $CODE" >&2
   exit "$CODE"
 fi
 
-wg show --dir "$TMPDIR/.workgraph" core-task --json | python3 -c 'import json,sys; t=json.load(sys.stdin); msgs=[e.get("message","") for e in t.get("log",[])]; assert any(m.startswith("Speedrift:") for m in msgs), msgs; print("ok")'
+wg show --dir "$TMPDIR/.workgraph" core-task --json | python3 -c 'import json,sys; t=json.load(sys.stdin); msgs=[e.get("message","") for e in t.get("log",[])]; assert any(m.startswith("Coredrift:") for m in msgs), msgs; print("ok")'
 
 wg show --dir "$TMPDIR/.workgraph" drift-harden-core-task --json >/dev/null
 wg show --dir "$TMPDIR/.workgraph" drift-scope-core-task --json >/dev/null
@@ -178,14 +178,14 @@ echo "ok"
 
 echo "3) pit-stop escalation after consecutive drift"
 set +e
-./.workgraph/speedrift --dir "$TMPDIR" check --task core-task --create-followups >/dev/null
+./.workgraph/coredrift --dir "$TMPDIR" check --task core-task --create-followups >/dev/null
 CODE="$?"
 set -e
 if [[ "$CODE" -ne 0 && "$CODE" -ne 3 ]]; then
-  echo "error: speedrift check (pit-stop) failed with exit code $CODE" >&2
+  echo "error: coredrift check (pit-stop) failed with exit code $CODE" >&2
   exit "$CODE"
 fi
-wg show --dir "$TMPDIR/.workgraph" speedrift-pit-core-task --json >/dev/null
+wg show --dir "$TMPDIR/.workgraph" coredrift-pit-core-task --json >/dev/null
 echo "ok"
 
 echo "4) monitor+redirect pipeline emits events and applies actions"
@@ -194,15 +194,15 @@ wg claim core-task-2 --actor tester >/dev/null
 echo "readme2" > README2.md
 printf '\n# fallback added\n' >> src/app.py
 
-./.workgraph/speedrift --dir "$TMPDIR" monitor --once >/dev/null
-test -s "$TMPDIR/.workgraph/.speedrift/events.jsonl"
+./.workgraph/coredrift --dir "$TMPDIR" monitor --once >/dev/null
+test -s "$TMPDIR/.workgraph/.coredrift/events.jsonl"
 
 set +e
-./.workgraph/speedrift --dir "$TMPDIR" redirect --once --write-log --create-followups --from-start >/dev/null
+./.workgraph/coredrift --dir "$TMPDIR" redirect --once --write-log --create-followups --from-start >/dev/null
 CODE="$?"
 set -e
 if [[ "$CODE" -ne 0 && "$CODE" -ne 3 ]]; then
-  echo "error: speedrift redirect failed with exit code $CODE" >&2
+  echo "error: coredrift redirect failed with exit code $CODE" >&2
   exit "$CODE"
 fi
 wg show --dir "$TMPDIR/.workgraph" drift-harden-core-task-2 --json >/dev/null
@@ -210,13 +210,13 @@ wg show --dir "$TMPDIR/.workgraph" drift-scope-core-task-2 --json >/dev/null
 echo "ok"
 
 echo "5) contract set-touch rewrites description"
-./.workgraph/speedrift --dir "$TMPDIR" contract set-touch --task core-task "src/**" "tests/**" >/dev/null
+./.workgraph/coredrift --dir "$TMPDIR" contract set-touch --task core-task "src/**" "tests/**" >/dev/null
 wg show --dir "$TMPDIR/.workgraph" core-task --json | python3 -c 'import json,sys; t=json.load(sys.stdin); d=t.get("description") or ""; assert "tests/**" in d, d; print("ok")'
 
 echo "6) ensure-contracts can inject default contracts"
 wg add "No contract" --id no-contract >/dev/null
 
-./.workgraph/speedrift --dir "$TMPDIR" ensure-contracts --apply >/dev/null
+./.workgraph/coredrift --dir "$TMPDIR" ensure-contracts --apply >/dev/null
 wg show --dir "$TMPDIR/.workgraph" no-contract --json | python3 -c 'import json,sys; t=json.load(sys.stdin); desc=t.get("description") or ""; assert "```wg-contract" in desc; print("ok")'
 
 echo "e2e_smoke: OK"

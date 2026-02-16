@@ -3,7 +3,7 @@ requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "speedrift"
+name = "coredrift"
 version = "0.1.0"
 description = "Workgraph sidecar to reduce agent/task drift (contracts + drift reports)"
 readme = "README.md"
@@ -11,7 +11,7 @@ requires-python = ">=3.11"
 dependencies = []
 
 [project.scripts]
-speedrift = "wg_drift.cli:main"
+coredrift = "wg_drift.cli:main"
 
 [tool.setuptools.packages.find]
 where = ["."]

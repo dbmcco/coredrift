@@ -1,6 +1,6 @@
 # Upstream PR Notes (workgraph)
 
-Speedrift is a prototype for “task contracts + drift radar” built on top of workgraph.
+Coredrift is a prototype for “task contracts + drift radar” built on top of workgraph.
 
 ## Problem: Unknown Task Fields Are Dropped
 

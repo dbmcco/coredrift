@@ -13,10 +13,10 @@ def _now_iso() -> str:
 
 
 def state_path(wg_dir: Path) -> Path:
-    return wg_dir / ".speedrift" / "state.json"
+    return wg_dir / ".coredrift" / "state.json"
 
 def lock_path(wg_dir: Path) -> Path:
-    return wg_dir / ".speedrift" / "state.lock"
+    return wg_dir / ".coredrift" / "state.lock"
 
 
 def load_state_unlocked(wg_dir: Path) -> dict[str, Any]:
@@ -40,7 +40,7 @@ def save_state_unlocked(wg_dir: Path, state: dict[str, Any]) -> None:
 @contextmanager
 def locked_state(wg_dir: Path) -> Iterator[dict[str, Any]]:
     """
-    Simple cross-process lock to avoid state corruption when multiple speedrift
+    Simple cross-process lock to avoid state corruption when multiple coredrift
     processes run (monitor/redirect, manual check, etc.).
     """
 
