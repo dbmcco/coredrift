@@ -20,7 +20,7 @@ where = ["."]
 include = ["wg_drift*"]
 
 [tool.uv.sources]
-speedrift-lane-sdk = { path = "../speedrift-lane-sdk", editable = true }
+speedrift-lane-sdk = { git = "https://github.com/dbmcco/speedrift-lane-sdk.git" }
 
 [dependency-groups]
 dev = [

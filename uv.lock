@@ -25,7 +25,7 @@ dev = [
 ]
 
 [package.metadata]
-requires-dist = [{ name = "speedrift-lane-sdk", editable = "../speedrift-lane-sdk" }]
+requires-dist = [{ name = "speedrift-lane-sdk", git = "https://github.com/dbmcco/speedrift-lane-sdk.git" }]
 
 [package.metadata.requires-dev]
 dev = [{ name = "pytest", specifier = ">=9.0.2" }]
@@ -85,4 +85,4 @@ wheels = [
 [[package]]
 name = "speedrift-lane-sdk"
 version = "0.1.0"
-source = { editable = "../speedrift-lane-sdk" }
+source = { git = "https://github.com/dbmcco/speedrift-lane-sdk.git#fa4e03e59cbcd13ac3a1ab915c7154c7a3b85de2" }
