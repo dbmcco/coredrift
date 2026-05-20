@@ -7,6 +7,8 @@ from pathlib import Path
 
 COREDRIFT_MARKER = "## Coredrift Protocol"
 UXDRIFT_MARKER = "## uxdrift Protocol"
+SUPERPOWERS_MARKER = "## Superpowers Protocol"
+MODEL_MEDIATED_MARKER = "## Model-Mediated Protocol"
 
 
 @dataclass(frozen=True)
@@ -237,8 +239,25 @@ Context from dependencies:
   ./.workgraph/drifts check --task {{{{task_id}}}} --write-log --create-followups
 - If you need to change scope, update touch globs:
   ./.workgraph/coredrift contract set-touch --task {{{{task_id}}}} <globs...>
-- If Coredrift flags `hardening_in_core`, do NOT add guardrails here; create/complete the `harden:` follow-up task.
+- If `hardening_in_core` is flagged, avoid adding guardrails in the core task; do/complete the `harden:` follow-up task instead.
+
+{SUPERPOWERS_MARKER}
+- If Superpowers-style skills are available in this environment, use:
+  /brainstorming before code
+  /test-driven-development for behavior changes
+  /verification-before-completion before `wg done`
+- If not available, follow the same phases explicitly.
+
+{MODEL_MEDIATED_MARKER}
+- Separate pipes vs decisions (facts/execution vs judgment).
+- If a Model-Mediated Architecture skill is available, apply it (model decides; code executes).
+- Log key decisions/deviations in `wg log`, and prefer follow-up tasks over bloating the current task.
 {uxdrift}
+
+## wg CLI Reference
+`wg add` accepts ONLY these flags — do not invent others:
+  wg add "<TITLE>" [--id <id>] [-d <description>] [--no-place] [--blocked-by <id>] [-t <tag>] [--verify "<cmd>"]
+  NOT valid: --immediate, --priority, --dep, --depends-on, --context
 
 ## Workgraph Rules
 - Stay focused on this task.
