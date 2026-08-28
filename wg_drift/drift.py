@@ -64,7 +64,7 @@ def compute_drift(
     findings: list[Finding] = []
     drift_files: list[str] = []
     if changes:
-        drift_files = [p for p in changes.changed_files if not (p.startswith(".workgraph/") or p.startswith(".git/"))]
+        drift_files = [p for p in changes.changed_files if not (p.startswith((".workgraph/", ".wg/", ".git/")))]
 
     telemetry: dict[str, Any] = {
         "files_changed": len(drift_files),

@@ -8,7 +8,9 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from speedrift_lane_sdk.workgraph import (  # noqa: F401
+    GRAPH_DIR_NAMES,
     Workgraph,
+    WorkgraphDirectoryConflictError,
     find_workgraph_dir,
     load_workgraph,
 )

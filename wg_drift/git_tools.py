@@ -55,7 +55,7 @@ def get_working_changes(git_root: str) -> WorkingChanges:
         except ValueError:
             continue
 
-    # Added lines (best-effort). Filter out .workgraph noise to avoid false positives.
+    # Added lines (best-effort). Filter out graph-dir noise (.workgraph/.wg) to avoid false positives.
     added_lines: list[str] = []
 
     def collect_added(diff_text: str) -> None:
@@ -67,7 +67,7 @@ def get_working_changes(git_root: str) -> WorkingChanges:
                 parts = line.split()
                 if len(parts) >= 4 and parts[3].startswith("b/"):
                     cur_file = parts[3][2:]
-                    include_file = not (cur_file.startswith(".workgraph/") or cur_file.startswith(".git/"))
+                    include_file = not (cur_file.startswith((".workgraph/", ".wg/", ".git/")))
                 else:
                     cur_file = None
                     include_file = True

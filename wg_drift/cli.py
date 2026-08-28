@@ -31,6 +31,7 @@ from wg_drift.install import (
 )
 from wg_drift.state import locked_state, mark_pit_stop_created, update_task_state
 from wg_drift.workgraph import (
+    GRAPH_DIR_NAMES,
     Workgraph,
     find_workgraph_dir,
     load_workgraph,
@@ -49,7 +50,7 @@ class ExitCode:
 
 def _parse_args(argv: list[str]) -> argparse.Namespace:
     p = argparse.ArgumentParser(prog="coredrift", add_help=True)
-    p.add_argument("--dir", help="Path to .workgraph directory (default: search upward from cwd)")
+    p.add_argument("--dir", help="Path to the active graph dir (.wg or .workgraph; default: search upward from cwd)")
 
     sub = p.add_subparsers(dest="cmd", required=True)
 
@@ -307,9 +308,16 @@ def main(argv: list[str] | None = None) -> int:
 
     try:
         if args.cmd == "install":
-            # Resolve or initialize workgraph directory.
+            # Resolve or initialize workgraph directory (.wg preferred over
+            # legacy .workgraph; hybrid repos resolve to the initialized graph).
             base = Path(args.dir).expanduser() if args.dir else Path.cwd()
-            wg_dir = base if base.name == ".workgraph" else base / ".workgraph"
+            if base.name in GRAPH_DIR_NAMES:
+                wg_dir = base
+            else:
+                try:
+                    wg_dir = find_workgraph_dir(base)
+                except FileNotFoundError:
+                    wg_dir = base / ".workgraph"
             if not (wg_dir / "graph.jsonl").exists():
                 import subprocess
 
