@@ -85,4 +85,4 @@ wheels = [
 [[package]]
 name = "speedrift-lane-sdk"
 version = "0.1.0"
-source = { git = "https://github.com/dbmcco/speedrift-lane-sdk.git#fa4e03e59cbcd13ac3a1ab915c7154c7a3b85de2" }
+source = { git = "https://github.com/dbmcco/speedrift-lane-sdk.git#cddeb51ebd226892360372bc5a4aee516fee955a" }
