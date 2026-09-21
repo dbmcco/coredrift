@@ -263,8 +263,9 @@ Context from dependencies:
 
 ## wg CLI Reference
 `wg add` accepts ONLY these flags — do not invent others:
-  wg add "<TITLE>" [--id <id>] [-d <description>] [--no-place] [--blocked-by <id>] [-t <tag>] [--verify "<cmd>"]
-  NOT valid: --immediate, --priority, --dep, --depends-on, --context
+  wg add "<TITLE>" [--id <id>] [-d <description>] [--after <id>] [-t <tag>] [--validation-command "<cmd>"] [--exec-mode <mode>] [--skill <name>]
+  `wg add` creates a paused draft; activate it with: wg publish <id> --only
+  NOT valid: --no-place (removed), --verify (removed), --immediate, --priority, --dep, --depends-on, --context
 
 ## Workgraph Rules
 - Stay focused on this task.
